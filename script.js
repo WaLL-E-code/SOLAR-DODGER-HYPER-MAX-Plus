@@ -391,11 +391,23 @@ const Game = {
     // --- SAFETY & THROTTLING ---
 
     isLaneSafeAtTime(lane, checkTime) {
-        // 1. Check Pending Spawns (using Audio Time)
+        // 1. Check Pending Spawns (Direct Conflict)
         const pendingConflict = this.pendingSpawns.some(p =>
             p.val === lane && Math.abs(p.time - checkTime) < this.safetyWindowSec
         );
         if (pendingConflict) return false;
+
+        // --- NEW: DENSITY VALVE (The "Anti-Wall" Fix) ---
+        // Count how many OTHER lanes are already blocked at this exact time window.
+        // If 4 lanes are already taken, we CANNOT allow a 5th spawn.
+        const blockedLanesCount = this.pendingSpawns.filter(p => 
+            Math.abs(p.time - checkTime) < this.safetyWindowSec
+        ).length;
+
+        // If we already have 4 (or more) blocked lanes, the board is saturated. 
+        // Reject this spawn to guarantee a path exists.
+        if (blockedLanesCount >= CONFIG.LANE_COUNT - 1) return false;
+        // ------------------------------------------------
 
         // 2. Check Reservations
         const reservationConflict = this.laneReservations.some(r =>
@@ -404,9 +416,6 @@ const Game = {
         if (reservationConflict) return false;
 
         // 3. Check Active Obstacles (Conservative)
-        // Check if any obstacle is currently "occupying" the lane in a dangerous way
-        // We estimate arrival at player y to see if it conflicts
-        // This is a rough check for active objects falling right now
         const activeConflict = this.obstacles.some(o =>
             !o.passed && o.lane === lane && o.y < this.height - 100
         );
@@ -421,7 +430,7 @@ const Game = {
     },
 
     ensureCoverage(spawnAnchor, windowSec) {
-        const beatSec = 60 / AudioEngine.currentBPM; // Use current BPM
+        const beatSec = 60 / AudioEngine.currentBPM; 
         const limitTime = spawnAnchor + windowSec;
         const coveredLanes = new Set();
 
@@ -437,6 +446,15 @@ const Game = {
         for (let i = 0; i < CONFIG.LANE_COUNT; i++) {
             if (!coveredLanes.has(i)) missingLanes.push(i);
         }
+
+        // --- START OF FIX ---
+        // CRITICAL FIX: If we identify missing lanes, we must randomly REMOVE one
+        // from the list to ensure there is always at least one safe path available.
+        if (missingLanes.length > 0) {
+            const safeIdx = Math.floor(Math.random() * missingLanes.length);
+            missingLanes.splice(safeIdx, 1);
+        }
+        // --- END OF FIX ---
 
         if (this.getPendingCountInWindow(windowSec) >= this.maxPerWindow) return;
 
@@ -1120,5 +1138,4 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => Game.init());
 } else {
     Game.init();
-
 }
