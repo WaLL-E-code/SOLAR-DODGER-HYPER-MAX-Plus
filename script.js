@@ -606,7 +606,7 @@ const Game = {
             this.checkMobile();
             this.resize();
             this.isRunning = true;
-            this.lives = 10;
+            this.lives = 1;
             document.getElementById('lives-count').innerText = this.lives;
             this.obstacles = [];
             this.pendingSpawns = [];
@@ -1120,4 +1120,5 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => Game.init());
 } else {
     Game.init();
+
 }
