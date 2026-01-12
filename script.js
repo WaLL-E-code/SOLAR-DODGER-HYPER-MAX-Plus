@@ -71,7 +71,7 @@ const AudioEngine = {
 
         // Master Chain
         this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.value = 0.5;
+        this.masterGain.gain.value = 1.0; // <--- FIX: Set to 100% Volume
         this.masterGain.connect(this.ctx.destination);
 
         // Sub-mixes
@@ -356,6 +356,8 @@ const AudioEngine = {
 /* --- GAME ENGINE --- */
 const Game = {
     godMode: false,
+    difficulty: 'hard',
+    warnMultiplier: 2.0,
     audioStartTime: 0,
     // SAFETY TUNING
     safetyWindowSec: 0.5,
@@ -400,7 +402,7 @@ const Game = {
         // --- NEW: DENSITY VALVE (The "Anti-Wall" Fix) ---
         // Count how many OTHER lanes are already blocked at this exact time window.
         // If 4 lanes are already taken, we CANNOT allow a 5th spawn.
-        const blockedLanesCount = this.pendingSpawns.filter(p => 
+        const blockedLanesCount = this.pendingSpawns.filter(p =>
             Math.abs(p.time - checkTime) < this.safetyWindowSec
         ).length;
 
@@ -430,7 +432,7 @@ const Game = {
     },
 
     ensureCoverage(spawnAnchor, windowSec) {
-        const beatSec = 60 / AudioEngine.currentBPM; 
+        const beatSec = 60 / AudioEngine.currentBPM;
         const limitTime = spawnAnchor + windowSec;
         const coveredLanes = new Set();
 
@@ -498,6 +500,20 @@ const Game = {
                 e.target.classList.add('selected');
             });
         });
+        // Difficulty Toggle Logic
+        document.querySelectorAll('.difficulty-mode').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const diff = e.target.dataset.diff;
+                this.difficulty = diff;
+
+                // Remove 'selected' from ALL difficulty buttons everywhere
+                document.querySelectorAll('.difficulty-mode').forEach(b => b.classList.remove('selected'));
+
+                // Add 'selected' to ALL buttons that match the clicked difficulty
+                // (This keeps Start Screen and Game Over screen in sync)
+                document.querySelectorAll(`.difficulty-mode[data-diff="${diff}"]`).forEach(b => b.classList.add('selected'));
+            });
+        });
 
         // NEW: Force UI to match the default 'buttons' mode immediately
         this.setControlMode(this.controlMode);
@@ -542,14 +558,11 @@ const Game = {
         const rightBtn = document.getElementById('touch-right');
         if (rightBtn) rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (this.controlMode === 'buttons') handleInput(1); }, { passive: false });
 
-        const ctrlBtns = document.querySelectorAll('.ctrl-btn');
-        if (ctrlBtns && ctrlBtns.length) {
-            ctrlBtns.forEach(btn => {
-                if (!btn.classList.contains('audio-mode')) {
-                    btn.addEventListener('click', (e) => this.setControlMode(e.target.dataset.mode));
-                }
-            });
-        }
+        // FIX: Only attach setControlMode to buttons that are explicitly for controls
+        const modeBtns = document.querySelectorAll('.ctrl-btn[data-mode]');
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => this.setControlMode(e.target.dataset.mode));
+        });
     },
 
     checkMobile() {
@@ -582,20 +595,17 @@ const Game = {
         this.controlMode = mode;
 
         // 1. Update the UI button styling (Highlight selected)
-        document.querySelectorAll('.ctrl-btn').forEach(btn => {
-            if (!btn.classList.contains('audio-mode')) {
-                btn.classList.toggle('selected', btn.dataset.mode === mode);
-            }
+        // FIX: Only update buttons that actually have a 'data-mode' attribute (Tap/Swipe)
+        document.querySelectorAll('.ctrl-btn[data-mode]').forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.mode === mode);
         });
 
         // 2. Strict Visibility Logic for Mobile Controls
         const mobileCtrls = document.getElementById('mobile-controls');
         if (mobileCtrls) {
-            // SHOW only if: Game is Running AND Mode is Buttons AND Device is Mobile
             if (this.isRunning && mode === 'buttons' && this.isMobile) {
                 mobileCtrls.classList.remove('hidden');
             } else {
-                // Otherwise (Swipe mode, paused, or desktop) -> HIDE
                 mobileCtrls.classList.add('hidden');
             }
         }
@@ -617,8 +627,13 @@ const Game = {
                     }
                 });
             }
-            AudioEngine.activeSource = null;
+            
+            // FIX: Properly disconnect the old gain node to prevent volume doubling
+            if (AudioEngine.activeGainNode) {
+                AudioEngine.activeGainNode.disconnect();
+            }
             AudioEngine.activeGainNode = null;
+            AudioEngine.activeSource = null;
             // -----------------------------------
 
             this.checkMobile();
@@ -637,6 +652,14 @@ const Game = {
             // RESET AUDIO / BPM
             AudioEngine.currentBPM = CONFIG.BPM_P1;
             document.getElementById('bpm-value').innerText = CONFIG.BPM_P1;
+            // APPLY DIFFICULTY SETTINGS
+            if (this.difficulty === 'hard') {
+                CONFIG.BASE_SCROLL_SPEED = 1100; // Much faster blocks (Normal is 700)
+                this.warnMultiplier = 3.5;       // Warning appears much later (less reaction time)
+            } else {
+                CONFIG.BASE_SCROLL_SPEED = 700;  // Reset to Normal
+                this.warnMultiplier = 2.0;       // Standard warning time
+            }
 
             this.player.x = 0.5;
             this.player.targetX = 0.5;
@@ -1011,6 +1034,17 @@ const Game = {
         AudioEngine.stop();
         document.getElementById('hud').classList.add('hidden');
         document.getElementById('game-over-screen').classList.remove('hidden');
+
+        // --- NEW: SYNC DIFFICULTY UI ---
+        // This ensures the Game Over screen shows the difficulty you just played
+        document.querySelectorAll('.difficulty-mode').forEach(b => {
+            b.classList.remove('selected');
+            if (b.dataset.diff === this.difficulty) {
+                b.classList.add('selected');
+            }
+        });
+        // -------------------------------
+
         document.getElementById('final-time').innerText = this.elapsed.toFixed(2);
 
         const e = this.elapsed;
@@ -1075,7 +1109,7 @@ const Game = {
             const now = AudioEngine.ctx.currentTime;
             this.preWarns.forEach(w => {
                 const timeLeft = w.spawnTime - now;
-                const progress = 1 - timeLeft * 2;
+                const progress = 1 - timeLeft * this.warnMultiplier; // Uses dynamic difficulty speed
                 if (progress > 0) {
                     this.ctx.globalAlpha = 0.15;
                     this.ctx.fillStyle = w.color;
