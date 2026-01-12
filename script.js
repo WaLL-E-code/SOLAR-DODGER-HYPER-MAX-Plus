@@ -355,7 +355,7 @@ const AudioEngine = {
 
 /* --- GAME ENGINE --- */
 const Game = {
-    godMode: false,
+    godMode: true,
     difficulty: 'hard',
     warnMultiplier: 2.0,
     audioStartTime: 0,
@@ -1173,3 +1173,4 @@ if (document.readyState === 'loading') {
 } else {
     Game.init();
 }
+
