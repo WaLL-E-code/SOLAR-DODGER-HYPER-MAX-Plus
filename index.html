@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
 
     <title>SOLAR DODGER | HYPER-MAX</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap"
+        rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -30,7 +34,7 @@
     <div id="flash-layer"></div>
 
     <div id="game-container">
-        
+
         <canvas id="gameCanvas"></canvas>
 
         <div id="ui-layer">
@@ -41,7 +45,7 @@
                     <h1 class="glitch sub" data-text="DODGER">DODGER</h1>
                     <div class="version-tag">HYPER-MAX Final</div>
                 </div>
-                
+
                 <div class="panel-box">
                     <p class="instruction-text">AVOID THE OBSTACLES // SYNC TO THE RHYTHM</p>
                     <p class="pc-instructions">[ A / D ] or [ ARROWS ] to Strafe</p>
@@ -61,6 +65,13 @@
                         <div class="toggle-group">
                             <button class="ctrl-btn audio-mode selected" data-audio="hybrid">HYBRID</button>
                             <button class="ctrl-btn audio-mode" data-audio="synth" style="display: none;">SYNTH</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-col">
+                        <p class="label">DIFFICULTY</p>
+                        <div class="toggle-group">
+                            <button class="ctrl-btn difficulty-mode selected" data-diff="hard">HARD</button>
                         </div>
                     </div>
                 </div>
@@ -109,7 +120,7 @@
 
             <div id="game-over-screen" class="screen hidden">
                 <h1 class="glitch red" data-text="TERMINATED">TERMINATED</h1>
-                
+
                 <div class="stats-grid">
                     <div class="stat-item">
                         <p class="label">TIME ALIVE</p>
@@ -121,11 +132,18 @@
                     </div>
                 </div>
 
-                <div class="setting-col mobile-only compact-settings">
-                    <p class="label">RE-CALIBRATE CONTROLS</p>
+                <div class="setting-col">
+                    <p class="label">AUDIO ENGINE</p>
                     <div class="toggle-group">
-                        <button class="ctrl-btn mode-swipe selected" data-mode="swipe">SWIPE</button>
-                        <button class="ctrl-btn mode-buttons" data-mode="buttons">TAP</button>
+                        <button class="ctrl-btn audio-mode selected" data-audio="hybrid">HYBRID</button>
+                        <button class="ctrl-btn audio-mode" data-audio="synth" style="display: none;">SYNTH</button>
+                    </div>
+                </div>
+
+                <div class="setting-col">
+                    <p class="label">DIFFICULTY</p>
+                    <div class="toggle-group">
+                        <button class="ctrl-btn difficulty-mode selected" data-diff="hard">HARD</button>
                     </div>
                 </div>
 
@@ -135,11 +153,12 @@
     </div>
 
     <div id="audio-assets" style="display: none;">
-        <audio id="track-p1" src="audio/phase1_solar_130.mp3" loop preload="auto" crossorigin="anonymous"></audio>
-        <audio id="track-p2" src="audio/phase2_neon_150.mp3" loop preload="auto" crossorigin="anonymous"></audio>
-        <audio id="track-p3" src="audio/phase3_void_180.mp3" loop preload="auto" crossorigin="anonymous"></audio>
+        <audio id="track-p1" src="./audio/phase1_solar_130.mp3" loop preload="auto" crossorigin="anonymous"></audio>
+        <audio id="track-p2" src="./audio/phase2_neon_150.mp3" loop preload="auto" crossorigin="anonymous"></audio>
+        <audio id="track-p3" src="./audio/phase3_void_180.mp3" loop preload="auto" crossorigin="anonymous"></audio>
     </div>
 
     <script src="script.js"></script>
 </body>
+
 </html>
