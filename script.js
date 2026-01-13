@@ -884,6 +884,15 @@ const Game = {
         AudioEngine.crossfadeMusic(phaseNum);
 
         this.cameraShake = 30;
+
+        // --- NEW: RESET DIFFICULTY FOR PHASE 2 & 3 ---
+        // Regardless of what difficulty you started on,
+        // once Phase 2 hits, we reset everything to standard "Normal" values.
+        if (phaseNum >= 2) {
+            CONFIG.BASE_SCROLL_SPEED = 700; // Force Speed back to Normal
+            this.warnMultiplier = 2.0;      // Force Warnings back to Normal
+            console.log("Phase Shift: Difficulty Normalized");
+        }
     },
 
     loop(t) {
@@ -1173,4 +1182,3 @@ if (document.readyState === 'loading') {
 } else {
     Game.init();
 }
-
