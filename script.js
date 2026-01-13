@@ -454,7 +454,15 @@ const Game = {
         // from the list to ensure there is always at least one safe path available.
         if (missingLanes.length > 0) {
             const safeIdx = Math.floor(Math.random() * missingLanes.length);
-            missingLanes.splice(safeIdx, 1);
+            const safeLane = missingLanes[safeIdx]; // 1. Capture the ID of the safe lane
+            missingLanes.splice(safeIdx, 1);        // 2. Remove it from the "Fill List"
+            
+            // 3. LOCK IT: Create a reservation so the random spawner cannot fill this hole
+            this.laneReservations.push({
+                lane: safeLane,
+                time: spawnAnchor,
+                expire: spawnAnchor + (60 / AudioEngine.currentBPM) // Lock for 1 beat
+            });
         }
         // --- END OF FIX ---
 
